@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # Core services
+  mcp-manager:
+    image: zueai/mcp-manager:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config:/app/config
+
+  # Database servers
+  postgres-mcp:
+    image: modelcontextprotocol/server-postgres
+    environment:
+      - POSTGRES_PASSWORD=secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mongodb-mcp:
+    image: quantgeekdev/mongo-mcp
+    volumes:
+      - mongo_data:/data/db
+
+  # Search servers
+  brave-search:
+    image: modelcontextprotocol/server-brave-search
+    environment:
+      - BRAVE_API_KEY=${BRAVE_API_KEY}
+
+  # Developer tools
+  git-server:
+    image: modelcontextprotocol/server-git
+    volumes:
+      - ./repos:/repos
+
+volumes:
+  postgres_data:
+  mongo_data:
