@@ -1,39 +1,59 @@
 version: '3.8'
 
 services:
-  # Core services
+  # Core Manager
   mcp-manager:
     image: zueai/mcp-manager:latest
     ports:
       - "3000:3000"
     volumes:
       - ./config:/app/config
+    restart: always
+    mem_limit: 256m
 
-  # Database servers
-  postgres-mcp:
-    image: modelcontextprotocol/server-postgres
+  # GCP-oriented Services
+  bigquery-mcp:
+    image: lucashild/mcp-server-bigquery
     environment:
-      - POSTGRES_PASSWORD=secure_password
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/credentials.json
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./secrets:/secrets:ro
+    restart: always
+    mem_limit: 256m
 
-  mongodb-mcp:
-    image: quantgeekdev/mongo-mcp
-    volumes:
-      - mongo_data:/data/db
-
-  # Search servers
-  brave-search:
-    image: modelcontextprotocol/server-brave-search
+  gcs-mcp:
+    build: ./services/gcs-mcp
     environment:
-      - BRAVE_API_KEY=${BRAVE_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/credentials.json
+    volumes:
+      - ./secrets:/secrets:ro
+    restart: always
+    mem_limit: 256m
 
-  # Developer tools
-  git-server:
+  # Database servers (minimized for nano VM)
+  sqlite-mcp:
+    image: modelcontextprotocol/server-sqlite
+    volumes:
+      - ./data/sqlite:/data
+    restart: always
+    mem_limit: 128m
+
+  # Search alternative
+  search-mcp:
+    build: ./services/search-mcp
+    environment:
+      - GOOGLE_CSE_ID=${GOOGLE_CSE_ID}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    restart: always
+    mem_limit: 256m
+
+  # Git operations
+  git-mcp:
     image: modelcontextprotocol/server-git
     volumes:
       - ./repos:/repos
+    restart: always
+    mem_limit: 128m
 
 volumes:
-  postgres_data:
-  mongo_data:
+  sqlite_data:
